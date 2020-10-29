@@ -1,6 +1,9 @@
 module Main where
 
-import Lib
+import HTTPS
 
 main :: IO ()
-main = someFunc
+main = do
+    let url = "https://opendata.ecdc.europa.eu/covid19/casedistribution/json/"
+    json <- makeAPIRequest url
+    print json

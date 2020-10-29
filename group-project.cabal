@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 982cea76c6150d762b55eaab1b66dce5e5bb7b7bab66e3644c9e3251c9a83ebf
+-- hash: a7539bb1cf181ea851233de3ec0531030f542a3f9c32fda6daaaae17a7488c09
 
 name:           group-project
 version:        0.1.0.0
@@ -26,13 +26,16 @@ source-repository head
 
 library
   exposed-modules:
-      Lib
+      HTTPS
   other-modules:
       Paths_group_project
   hs-source-dirs:
       src
   build-depends:
-      base >=4.7 && <5
+      aeson
+    , base >=4.7 && <5
+    , bytestring
+    , http-conduit
   default-language: Haskell2010
 
 executable group-project-exe
@@ -43,8 +46,11 @@ executable group-project-exe
       app
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      aeson
+    , base >=4.7 && <5
+    , bytestring
     , group-project
+    , http-conduit
   default-language: Haskell2010
 
 test-suite group-project-test
@@ -56,6 +62,9 @@ test-suite group-project-test
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      aeson
+    , base >=4.7 && <5
+    , bytestring
     , group-project
+    , http-conduit
   default-language: Haskell2010
