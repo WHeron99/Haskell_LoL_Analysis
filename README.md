@@ -1,2 +1,2 @@
-# group-project
-ECS708U - Group 7
+# ECS713U - Group Project
+Group 7 - William Heron and Brandon Taylor
