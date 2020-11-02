@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a7539bb1cf181ea851233de3ec0531030f542a3f9c32fda6daaaae17a7488c09
+-- hash: 2c4a9f94bacb499798514dbba42f4383dd1d32df1b052f46cbe7a7d0c1cab246
 
 name:           group-project
 version:        0.1.0.0
@@ -27,6 +27,7 @@ source-repository head
 library
   exposed-modules:
       HTTPS
+      Parse
   other-modules:
       Paths_group_project
   hs-source-dirs:
