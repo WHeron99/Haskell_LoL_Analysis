@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 2c4a9f94bacb499798514dbba42f4383dd1d32df1b052f46cbe7a7d0c1cab246
+-- hash: 9e315a69c867cb0720e0f70f55c950d79f76f4885f3a8ca209a7a1612b9c0b65
 
 name:           group-project
 version:        0.1.0.0
@@ -26,6 +26,7 @@ source-repository head
 
 library
   exposed-modules:
+      Database
       HTTPS
       Parse
   other-modules:
@@ -33,7 +34,9 @@ library
   hs-source-dirs:
       src
   build-depends:
-      aeson
+      HDBC
+    , HDBC-sqlite3
+    , aeson
     , base >=4.7 && <5
     , bytestring
     , http-conduit
@@ -47,7 +50,9 @@ executable group-project-exe
       app
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      aeson
+      HDBC
+    , HDBC-sqlite3
+    , aeson
     , base >=4.7 && <5
     , bytestring
     , group-project
@@ -63,7 +68,9 @@ test-suite group-project-test
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      aeson
+      HDBC
+    , HDBC-sqlite3
+    , aeson
     , base >=4.7 && <5
     , bytestring
     , group-project

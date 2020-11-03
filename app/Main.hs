@@ -9,4 +9,4 @@ main = do
     json <- makeAPIRequest url
     case (parseLeaderboard json) of 
         Left err -> print err
-        Right leaderboard -> print.head $ (entries leaderboard)
+        Right leaderboard -> print.head $ (lb_entries leaderboard)
