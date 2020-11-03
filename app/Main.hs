@@ -2,11 +2,18 @@ module Main where
 
 import HTTPS
 import Parse
+import Database
 
 main :: IO ()
 main = do
-    let url = "https://euw1.api.riotgames.com/lol/league/v4/challengerleagues/by-queue/RANKED_SOLO_5x5"
+    let url = "https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/Firesoulpwn"
+    print "Downloading..."
     json <- makeAPIRequest url
-    case (parseLeaderboard json) of 
+    print "Parsing..."
+    case (parseSummoner json) of 
         Left err -> print err
-        Right leaderboard -> print.head $ (lb_entries leaderboard)
+        Right summoner -> do
+            print "Saving to DB..."
+            conn <- initialiseDB
+            saveSummoner summoner conn
+    print "Fin."

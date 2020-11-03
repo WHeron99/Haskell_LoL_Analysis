@@ -1,6 +1,7 @@
 module Database
     (
-      initialiseDB
+      initialiseDB,
+      saveSummoner
     ) where
 
 -- Import required modules
@@ -39,3 +40,12 @@ summonerToSQL summoner = [
         toSql $ s_revisionDate summoner,
         toSql $ s_summonerLevel summoner
     ]
+
+prepareSummonerInsert :: Connection -> IO Statement
+prepareSummonerInsert conn = prepare conn "INSERT INTO summoners VALUES (?,?,?,?,?,?,?)"
+
+saveSummoner :: Summoner -> Connection -> IO ()
+saveSummoner summoner conn = do
+    statement <- prepareSummonerInsert conn
+    execute statement $ summonerToSQL summoner
+    commit conn
