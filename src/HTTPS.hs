@@ -11,10 +11,11 @@ import Network.HTTP.Simple
 type URL = String
 
 -- The API key we need to make requests to the Riot Games API, add it to a query parameter
-api_key = "RGAPI-8f87f623-91c0-4e11-90d7-40ebcd231cea"
+api_key = "RGAPI-3155526b-fa4f-424e-ba0f-c893736afe8b"
 api_key_query_param = "?api_key=" ++ api_key
  
--- Attempt to make an API request on the given URL, and return the bytestring from the response body.
+-- /The makeAPIRequest function attempts to make an API request on the given URL,
+-- and returns the bytestring from the response body, if the request is succesful.
 makeAPIRequest :: URL -> IO L8.ByteString
 makeAPIRequest url = do
     req <- parseRequest $ url ++ api_key_query_param                  -- Create the request to the given URL + the API key as a parameter
