@@ -13,7 +13,7 @@ initialiseDB :: IO Connection
 initialiseDB = 
     do
         conn <- connectSqlite3 "league.sqlite"
-        -- Create the Summoners table (for accounts)
+        -- Each table, and commit them to the database
         run conn "CREATE TABLE IF NOT EXISTS summoners (\
             \id VARCHAR(60) NOT NULL, \
             \accountId VARCHAR(60) NOT NULL, \
@@ -21,7 +21,60 @@ initialiseDB =
             \name VARCHAR(40) NOT NULL, \
             \profileIconId INT DEFAULT NULL, \
             \revisionDate INT DEFAULT NULL, \
-            \summonerLevel INT DEFAULT NULL \
+            \summonerLevel INT DEFAULT NULL, \
+            \PRIMARY KEY (id) \
+            \)" []
+        commit conn
+        run conn "CREATE TABLE IF NOT EXISTS match (\
+            \gameId INT DEFAULT NULL, \
+            \gameCreation INT DEFAULT NULL, \
+            \gameDuration INT DEFAULT NULL, \
+            \gameMode VARCHAR(40) NOT NULL, \
+            \gameType VARCHAR(40) NOT NULL, \
+            \PRIMARY KEY (gameId) \
+            \)" []
+        commit conn
+        run conn "CREATE TABLE IF NOT EXISTS team (\
+            \gameId INT DEFAULT NULL, \
+            \teamId INT DEFAULT NULL, \
+            \win VARCHAR(10) NOT NULL, \
+            \firstBlood INT DEFAULT NULL, \
+            \firstTower INT DEFAULT NULL, \
+            \towerKills INT DEFAULT NULL, \
+            \inhibitorKills INT DEFAULT NULL, \
+            \baronKills INT DEFAULT NULL, \
+            \dragonKills INT DEFAULT NULL, \
+            \riftHeraldKills INT DEFAULT NULL, \
+            \PRIMARY KEY (gameId, teamId) \
+            \)" []
+        commit conn
+        run conn "CREATE TABLE IF NOT EXISTS participant (\
+            \gameId INT DEFAULT NULL, \
+            \participantId INT DEFAULT NULL, \
+            \teamId INT DEFAULT NULL, \
+            \win INT DEFAULT NULL, \
+            \kills INT DEFAULT NULL, \
+            \deaths INT DEFAULT NULL, \
+            \assists INT DEFAULT NULL, \
+            \largestKillingSpree INT DEFAULT NULL, \
+            \largestMultiKill INT DEFAULT NULL, \
+            \totalDamageDealt INT DEFAULT NULL, \
+            \totalDamageDealtToChampions INT DEFAULT NULL, \
+            \totalDamageTaken INT DEFAULT NULL, \
+            \goldEarned INT DEFAULT NULL, \
+            \goldSpent INT DEFAULT NULL, \
+            \totalMinionsKilled INT DEFAULT NULL, \
+            \PRIMARY KEY (gameId, participantId) \
+            \)" []
+        commit conn
+        run conn "CREATE TABLE IF NOT EXISTS participantIdentity (\
+            \gameId INT DEFAULT NULL, \
+            \participantId INT DEFAULT NULL, \
+            \accountId VARCHAR(80) NOT NULL, \
+            \summonerName VARCHAR(50) NOT NULL, \
+            \summonerId VARCHAR(80) NOT NULL, \
+            \currentAccountId VARCHAR(80) NOT NULL, \
+            \PRIMARY KEY (gameId, participantId) \
             \)" []
         commit conn
         return conn

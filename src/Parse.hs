@@ -13,8 +13,7 @@ module Parse
       parseMatch,
       Match(..),
       Team(..),
-      Participant(..),
-      ParticipantStats(..)
+      Participant(..)
     ) where
 
 import Data.Aeson
@@ -101,24 +100,18 @@ data Participant = Participant {
     p_participantId :: Int,
     p_teamId :: Int,
     p_championId :: Int,
-    p_stats :: ParticipantStats
-} deriving (Show, Generic)
-
--- This type denotes a players stats for a single given match
-data ParticipantStats = ParticipantStats {
-    ps_participantId :: Int,
-    ps_win :: Bool,
-    ps_kills :: Int,
-    ps_deaths :: Int,
-    ps_assists :: Int,
-    ps_largestKillingSpree :: Int,
-    ps_largestMultiKill :: Int,
-    ps_totalDamageDealt :: Int,
-    ps_totalDamageDealtToChampions :: Int,
-    ps_totalDamageTaken :: Int,
-    ps_goldEarned :: Int,
-    ps_goldSpent :: Int,
-    ps_totalMinionsKilled :: Int
+    p_win :: Bool,
+    p_kills :: Int,
+    p_deaths :: Int,
+    p_assists :: Int,
+    p_largestKillingSpree :: Int,
+    p_largestMultiKill :: Int,
+    p_totalDamageDealt :: Int,
+    p_totalDamageDealtToChampions :: Int,
+    p_totalDamageTaken :: Int,
+    p_goldEarned :: Int,
+    p_goldSpent :: Int,
+    p_totalMinionsKilled :: Int
 } deriving (Show, Generic)
 
 data ParticipantIdentity = ParticipantIdentity {
@@ -132,7 +125,7 @@ data ParticipantIdentity = ParticipantIdentity {
 instance FromJSON ParticipantIdentity where
     parseJSON = withObject "participant" $ \o -> do
         pi_participantId <- o .: "participantId"
-        player <- o .: "player"
+        player <- o .: "player"                         -- Get player sub-dictionary from JSON
         pi_accountId <- player .: "accountId"
         pi_summonerName <- player .: "summonerName"
         pi_summonerId <- player .: "summonerId"
@@ -150,8 +143,50 @@ instance ToJSON ParticipantIdentity where
             ]
         ]
 
-$(deriveJSON defaultOptions{fieldLabelModifier = drop 3} ''ParticipantStats)
-$(deriveJSON defaultOptions{fieldLabelModifier = drop 2} ''Participant)
+instance FromJSON Participant where
+    parseJSON = withObject "participant" $ \o -> do
+        p_participantId <- o .: "participantId"
+        p_teamId <- o .: "teamId"
+        p_championId <- o .: "championId"
+        stats <- o .: "stats"
+        -- Now parse the stats from the stats subdictionary
+        p_win <- stats .: "win"
+        p_kills <- stats .: "kills"
+        p_deaths <- stats .: "deaths"
+        p_assists <- stats .: "assists"
+        p_largestKillingSpree <- stats .: "largestKillingSpree"
+        p_largestMultiKill <- stats .: "largestMultiKill"
+        p_totalDamageDealt <- stats .: "totalDamageDealt"
+        p_totalDamageDealtToChampions <- stats .: "totalDamageDealtToChampions"
+        p_totalDamageTaken <- stats .: "totalDamageTaken"
+        p_goldEarned <- stats .: "goldEarned"
+        p_goldSpent <- stats .: "goldSpent"
+        p_totalMinionsKilled <- stats .: "totalMinionsKilled"
+        return Participant{..}
+
+instance ToJSON Participant where
+    toJSON p = object [
+        "participantId" .= p_participantId p,
+        "teamId" .= p_teamId p,
+        "championId" .= p_championId p,
+        "stats" .= object [
+            "win" .= p_win p,
+            "kills" .= p_kills p,
+            "deaths" .= p_deaths p,
+            "assists" .= p_assists p,
+            "largestKillingSpree" .= p_largestKillingSpree p,
+            "largestMultiKill" .= p_largestMultiKill p,
+            "totalDamageDealt" .= p_totalDamageDealt p,
+            "totalDamageDealtToChampions" .= p_totalDamageDealtToChampions p,
+            "totalDamageTaken" .= p_totalDamageTaken p,
+            "goldEarned" .= p_goldEarned p,
+            "goldSpent" .= p_goldSpent p,
+            "totalMinionsKilled" .= p_totalMinionsKilled p
+            ]
+        ]
+
+
+-- Automatically derive To/From JSON for Team and Match Types - stripping the leading identifiers.
 $(deriveJSON defaultOptions{fieldLabelModifier = drop 2} ''Team)
 $(deriveJSON defaultOptions{fieldLabelModifier = drop 2} ''Match)
 

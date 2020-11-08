@@ -11,7 +11,7 @@ import Network.HTTP.Simple
 type URL = String
 
 -- The API key we need to make requests to the Riot Games API, add it to a query parameter
-api_key = "RGAPI-3155526b-fa4f-424e-ba0f-c893736afe8b"
+api_key = "RGAPI-b203c052-065b-4e17-88a7-cce9cc8c551d"
 api_key_query_param = "?api_key=" ++ api_key
  
 -- /The makeAPIRequest function attempts to make an API request on the given URL,
