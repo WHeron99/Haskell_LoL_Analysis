@@ -1,0 +1,187 @@
+module Database
+    (
+      initialiseDB,
+      saveSummoner,
+      saveMatch
+    ) where
+
+-- Import required modules
+import Database.HDBC
+import Database.HDBC.Sqlite3
+import Parse
+
+initialiseDB :: IO Connection
+initialiseDB = 
+    do
+        conn <- connectSqlite3 "league.sqlite"
+        -- Each table, and commit them to the database
+        run conn "CREATE TABLE IF NOT EXISTS summoners (\
+            \id VARCHAR(60) NOT NULL, \
+            \accountId VARCHAR(60) NOT NULL, \
+            \puuid VARCHAR(60) NOT NULL, \
+            \name VARCHAR(40) NOT NULL, \
+            \profileIconId INT DEFAULT NULL, \
+            \revisionDate INT DEFAULT NULL, \
+            \summonerLevel INT DEFAULT NULL, \
+            \PRIMARY KEY (id) \
+            \)" []
+        commit conn
+        run conn "CREATE TABLE IF NOT EXISTS match (\
+            \gameId INT DEFAULT NULL, \
+            \gameCreation INT DEFAULT NULL, \
+            \gameDuration INT DEFAULT NULL, \
+            \gameMode VARCHAR(40) NOT NULL, \
+            \gameType VARCHAR(40) NOT NULL, \
+            \PRIMARY KEY (gameId) \
+            \)" []
+        commit conn
+        run conn "CREATE TABLE IF NOT EXISTS team (\
+            \gameId INT DEFAULT NULL, \
+            \teamId INT DEFAULT NULL, \
+            \win VARCHAR(10) NOT NULL, \
+            \firstBlood INT DEFAULT NULL, \
+            \firstTower INT DEFAULT NULL, \
+            \towerKills INT DEFAULT NULL, \
+            \inhibitorKills INT DEFAULT NULL, \
+            \baronKills INT DEFAULT NULL, \
+            \dragonKills INT DEFAULT NULL, \
+            \riftHeraldKills INT DEFAULT NULL, \
+            \PRIMARY KEY (gameId, teamId) \
+            \)" []
+        commit conn
+        run conn "CREATE TABLE IF NOT EXISTS participant (\
+            \gameId INT DEFAULT NULL, \
+            \participantId INT DEFAULT NULL, \
+            \teamId INT DEFAULT NULL, \
+            \championId INT DEFAULT NULL, \
+            \win INT DEFAULT NULL, \
+            \kills INT DEFAULT NULL, \
+            \deaths INT DEFAULT NULL, \
+            \assists INT DEFAULT NULL, \
+            \largestKillingSpree INT DEFAULT NULL, \
+            \largestMultiKill INT DEFAULT NULL, \
+            \totalDamageDealt INT DEFAULT NULL, \
+            \totalDamageDealtToChampions INT DEFAULT NULL, \
+            \totalDamageTaken INT DEFAULT NULL, \
+            \goldEarned INT DEFAULT NULL, \
+            \goldSpent INT DEFAULT NULL, \
+            \totalMinionsKilled INT DEFAULT NULL, \
+            \PRIMARY KEY (gameId, participantId) \
+            \)" []
+        commit conn
+        run conn "CREATE TABLE IF NOT EXISTS participantIdentity (\
+            \gameId INT DEFAULT NULL, \
+            \participantId INT DEFAULT NULL, \
+            \accountId VARCHAR(80) NOT NULL, \
+            \summonerName VARCHAR(50) NOT NULL, \
+            \summonerId VARCHAR(80) NOT NULL, \
+            \currentAccountId VARCHAR(80) NOT NULL, \
+            \PRIMARY KEY (gameId, participantId) \
+            \)" []
+        commit conn
+        return conn
+
+-- Functions to convert our Haskell records to SQL types from a given record:
+-- /summonerToSQL converts the Haskell Datatype Summoner, to the relevent SQL values which
+-- we can use to insert to the database.
+summonerToSQL :: Summoner -> [SqlValue]
+summonerToSQL summoner = [
+        toSql $ s_id summoner,
+        toSql $ s_accountId summoner,
+        toSql $ s_puuid summoner,
+        toSql $ s_name summoner,
+        toSql $ s_profileIconId summoner,
+        toSql $ s_revisionDate summoner,
+        toSql $ s_summonerLevel summoner
+    ]
+
+-- /prepareSummonerInsert prepares the SQL insert statement, without the explicit values.
+prepareSummonerInsert :: Connection -> IO Statement
+prepareSummonerInsert conn = prepare conn "INSERT INTO summoners VALUES (?,?,?,?,?,?,?)"
+
+-- /saveSummoner takes a Summoner type and connection as arguments. This function prepares
+-- the insert statement, and then executes it with the values from the given summoner which
+-- has been converted to SqlValues with summonerToSQL.
+saveSummoner :: Summoner -> Connection -> IO ()
+saveSummoner summoner conn = do
+    statement <- prepareSummonerInsert conn
+    execute statement $ summonerToSQL summoner
+    commit conn
+
+-- Functions relating to Match Types:
+-- /participantIdentityToSQL takes a participant identity type and the given game's id, and
+-- returns a list of SqlValues for the respective table
+participantIdentityToSQL :: Int -> ParticipantIdentity -> [SqlValue]
+participantIdentityToSQL game_id participant_identity = [
+        toSql game_id,
+        toSql $ pi_participantId participant_identity,
+        toSql $ pi_accountId participant_identity,
+        toSql $ pi_summonerName participant_identity,
+        toSql $ pi_summonerId participant_identity,
+        toSql $ pi_currentAccountId participant_identity
+    ]
+
+-- /participantToSQL takes the respective game_id and a participant type, and returns the list
+-- of respective SqlValues, needed for the SQLite table.
+participantToSQL :: Int -> Participant -> [SqlValue]
+participantToSQL game_id participant = [
+        toSql game_id,
+        toSql $ p_participantId participant,
+        toSql $ p_teamId participant,
+        toSql $ p_championId participant,
+        toSql $ p_win participant,
+        toSql $ p_kills participant,
+        toSql $ p_deaths participant,
+        toSql $ p_assists participant,
+        toSql $ p_largestKillingSpree participant,
+        toSql $ p_largestMultiKill participant,
+        toSql $ p_totalDamageDealt participant,
+        toSql $ p_totalDamageDealtToChampions participant,
+        toSql $ p_totalDamageTaken participant,
+        toSql $ p_goldEarned participant,
+        toSql $ p_goldSpent participant,
+        toSql $ p_totalMinionsKilled participant
+    ]
+
+-- /teamToSQL takes the given game Id, and a Team type, and returns the respective
+-- SqlValues for the Team table in the SQLite database.
+teamToSQL :: Int -> Team -> [SqlValue]
+teamToSQL game_id team = [
+        toSql game_id,
+        toSql $ t_teamId team,
+        toSql $ t_win team,
+        toSql $ t_firstBlood team,
+        toSql $ t_firstTower team, 
+        toSql $ t_towerKills team,
+        toSql $ t_inhibitorKills team,
+        toSql $ t_baronKills team,
+        toSql $ t_dragonKills team,
+        toSql $ t_riftHeraldKills team
+    ]
+
+-- /matchToSQL takes a match object, and parses the required values for the match table
+-- in the match database table.
+matchToSQL :: Match -> [SqlValue]
+matchToSQL match = [
+        toSql $ m_gameId match,
+        toSql $ m_gameCreation match,
+        toSql $ m_gameDuration match,
+        toSql $ m_gameMode match,
+        toSql $ m_gameType match
+    ]
+
+-- /saveMatch takes a match object, and prepares each of the required statements for its
+-- components for saving to the database. It will save 10 participants and participant infos,
+-- 2 teams and one overall match to the database. 
+saveMatch :: Match -> Connection -> IO ()
+saveMatch match conn = do
+    let game_id = m_gameId match
+    match_statement <- prepare conn "INSERT INTO match VALUES (?,?,?,?,?)"
+    execute match_statement $ matchToSQL match
+    team_statement <- prepare conn "INSERT INTO team VALUES (?,?,?,?,?,?,?,?,?,?)"
+    executeMany team_statement $ map (teamToSQL game_id) (m_teams match)
+    p_statement <- prepare conn "INSERT INTO participant VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+    executeMany p_statement $ map (participantToSQL game_id) (m_participants match)
+    pi_statement <- prepare conn "INSERT INTO participantIdentity VALUES (?,?,?,?,?,?)"
+    executeMany pi_statement $ map (participantIdentityToSQL game_id) (m_participantIdentities match)
+    commit conn
