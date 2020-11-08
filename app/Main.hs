@@ -6,6 +6,8 @@ import Database
 
 main :: IO ()
 main = do
+    conn <- initialiseDB
+    print "Database connection established..."
     print "Please enter a Summoner name to retrieve..."
     name <- getLine
     let url = "https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/" ++ name
@@ -16,7 +18,6 @@ main = do
         Left err -> print err
         Right summoner -> do
             print "Saving to DB..."
-            conn <- initialiseDB
             saveSummoner summoner conn
     print "Fin."
     -- ! TEST FOR MATCHLIST PARSE
@@ -26,3 +27,5 @@ main = do
         Left err -> print err
         Right match -> do
             print match
+            saveMatch match conn
+            print "Match saved to database"

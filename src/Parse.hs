@@ -13,7 +13,8 @@ module Parse
       parseMatch,
       Match(..),
       Team(..),
-      Participant(..)
+      Participant(..),
+      ParticipantIdentity(..)
     ) where
 
 import Data.Aeson
