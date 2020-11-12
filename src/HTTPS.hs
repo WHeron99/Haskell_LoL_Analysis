@@ -14,8 +14,11 @@ type URL = String
 api_key = "RGAPI-b203c052-065b-4e17-88a7-cce9cc8c551d"
 api_key_query_param = "?api_key=" ++ api_key
  
--- /The makeAPIRequest function attempts to make an API request on the given URL,
--- and returns the bytestring from the response body, if the request is succesful.
+{- |
+  'makeAPIRequest' takes a 'URL' - which is an alias for 'String', and attempts to query the given API URL.
+
+  This function should return an 'IO ByteString' denoting the returned JSON data from the HTTP response body.
+-}
 makeAPIRequest :: URL -> IO L8.ByteString
 makeAPIRequest url = do
     req <- parseRequest $ url ++ api_key_query_param                  -- Create the request to the given URL + the API key as a parameter
