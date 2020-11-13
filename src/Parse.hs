@@ -1,3 +1,15 @@
+{-|
+Module      : Parse
+Stability   : experimental
+Portability : POSIX
+
+This module is responsible for converting JSON ByteStrings to Haskell Datatypes, which are also defined in this
+    module. This modules exports include the defined datatypes, and the parse functions. The Participant and
+    ParticipantIdentity types each have custom designed parsers. The remaining types automatically derive Generic
+    but make use of some language extensions to append name extensions to their fields to prevent ambiguity errors,
+    such as in the case of the id name, which conflicts directly with Prelude.
+-}
+
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -221,7 +233,7 @@ $(deriveJSON defaultOptions{fieldLabelModifier = drop 2} ''Match)
     'parseMatch' takes a 'ByteString' type, parses it to a 'Match' type - including all of its sub-components.
     
     By definition of a 'Match' in League of Legends, a single 'Match' will contain 10 'Participant' objects, 
-        10 'PartcipantIdentity' objects and 2 'Team' objects.
+        10 'ParticipantIdentity' objects and 2 'Team' objects.
 -}
 parseMatch :: L8.ByteString -> Either String Match
 parseMatch json = eitherDecode json :: Either String Match

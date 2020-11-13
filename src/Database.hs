@@ -1,3 +1,14 @@
+{-|
+Module      : Database
+Stability   : experimental
+Portability : POSIX
+
+This module is responsible for creating and maintaining the connection to the database.
+    This modules exports methods which create the database, 'initialiseDB', as well as 
+    different methods with which to write the Haskell Datatypes defined in the 'Parse'
+    module to the database.
+-}
+
 module Database
     (
       initialiseDB,
@@ -117,6 +128,9 @@ prepareSummonerInsert conn = prepare conn "INSERT INTO summoners VALUES (?,?,?,?
     'saveSummoner' takes a 'Summoner' type and 'Connection' as arguments. This function prepares
         the insert statement, and then executes it with the values from the given summoner which
         has been converted to 'SqlValue's with 'summonerToSQL'.
+    
+    This function also performs a check to ensure it will not attempt to write to a primary key
+        (summoner_id) that is already occupied.
 -}
 saveSummoner :: Summoner -> Connection -> IO ()
 saveSummoner summoner conn = do
@@ -205,6 +219,9 @@ matchToSQL match = [
     'saveMatch' takes a 'Match' object, and prepares each of the required statements for its
     components for saving to the database. It will save 10 'Participant's and 'ParticipantIdentitiy's,
     2 'Team's and one overall 'Match' to the database. 
+
+    This method will not perform any meaningful action if the match that is being written to the
+    database already exists, by performing a quick query on the primary key - the game_id.
 -}
 saveMatch :: Match -> Connection -> IO ()
 saveMatch match conn = do

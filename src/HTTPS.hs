@@ -1,3 +1,12 @@
+{-|
+Module      : HTTPS
+Stability   : experimental
+Portability : POSIX
+
+This module is responsible for attempting to make API calls to a given API endpoint, using
+a set of predefined functions.
+-}
+
 module HTTPS
     (
       makeAPIRequest
