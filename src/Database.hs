@@ -102,7 +102,7 @@ initialiseDB =
 
 -- Functions to convert our Haskell records to SQL types from a given record:
 {- |
-    'summonerToSQL' converts the Haskell Datatype 'Summoner', to the relevent 'SqlValue's which 
+    'summonerToSQL' converts the Haskell Datatype 'Summoner', to the relevent 'SqlValue' types which 
         we can use to insert to the database. 
 -}
 summonerToSQL :: Summoner -> [SqlValue]
@@ -118,7 +118,7 @@ summonerToSQL summoner = [
 
 {- |
     'prepareSummonerInsert' prepares the SQL insert statement, without the explicit values.
-        This function takes the database 'Connection' and returns an 'IO Statement' which is 
+        This function takes the database 'Connection' and returns an 'IO' 'Statement' which is 
         ready to have values inserted.
 -}
 prepareSummonerInsert :: Connection -> IO Statement
@@ -127,7 +127,7 @@ prepareSummonerInsert conn = prepare conn "INSERT INTO summoners VALUES (?,?,?,?
 {- |
     'saveSummoner' takes a 'Summoner' type and 'Connection' as arguments. This function prepares
         the insert statement, and then executes it with the values from the given summoner which
-        has been converted to 'SqlValue's with 'summonerToSQL'.
+        has been converted to 'SqlValue' types with 'summonerToSQL'.
     
     This function also performs a check to ensure it will not attempt to write to a primary key
         (summoner_id) that is already occupied.
@@ -148,7 +148,7 @@ saveSummoner summoner conn = do
 -- Functions relating to Match Types:
 {- |
     'participantIdentityToSQL' takes a 'ParticipantIdentity' type and the given game's id, and
-        returns a list of 'SqlValue's for the respective table
+        returns a list of 'SqlValue' objects for the respective table
 -}
 participantIdentityToSQL :: Int -> ParticipantIdentity -> [SqlValue]
 participantIdentityToSQL game_id participant_identity = [
@@ -162,7 +162,7 @@ participantIdentityToSQL game_id participant_identity = [
 
 {- |
     'participantToSQL' takes the respective game_id and a 'Participant' type, and returns the list
-        of respective 'SqlValue's, needed for the SQLite table.
+        of respective 'SqlValue' objects, needed for the SQLite table.
 -}
 participantToSQL :: Int -> Participant -> [SqlValue]
 participantToSQL game_id participant = [
@@ -186,7 +186,7 @@ participantToSQL game_id participant = [
 
 {- |
     'teamToSQL' takes the given game Id, and a 'Team' type, and returns the respective
-        'SqlValue's for the 'Team' table in the SQLite database.
+        list of 'SqlValue' objects for the 'Team' table in the SQLite database.
 -}
 teamToSQL :: Int -> Team -> [SqlValue]
 teamToSQL game_id team = [
@@ -217,8 +217,8 @@ matchToSQL match = [
 
 {- |
     'saveMatch' takes a 'Match' object, and prepares each of the required statements for its
-    components for saving to the database. It will save 10 'Participant's and 'ParticipantIdentitiy's,
-    2 'Team's and one overall 'Match' to the database. 
+    components for saving to the database. It will save 10 'Participant' and 'ParticipantIdentity'
+    records, 2 'Team' records and one overall 'Match' to the database. 
 
     This method will not perform any meaningful action if the match that is being written to the
     database already exists, by performing a quick query on the primary key - the game_id.
