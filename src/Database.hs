@@ -26,7 +26,7 @@ import Parse
         ensures that all of the required tables are created (in the case the database has 
         been wiped or deleted)
 
-    This takes no arguments, and returns an 'IO Connection' type, which can be used to 
+    This takes no arguments, and returns an 'IO' 'Connection' type, which can be used to 
         interface with the Database.
 -}
 initialiseDB :: IO Connection

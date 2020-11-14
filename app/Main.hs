@@ -10,9 +10,8 @@ main = do
     print "Database connection established..."
     print "Please enter a Summoner name to retrieve..."
     name <- getLine
-    let url = "https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/" ++ name
     print "Downloading..."
-    json <- makeAPIRequest url
+    json <- requestSummonerByName name
     print "Parsing..."
     case (parseSummoner json) of 
         Left err -> print err
