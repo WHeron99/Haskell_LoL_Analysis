@@ -11,6 +11,7 @@ This module is responsible for creating and maintaining the connection to the da
 
 module Database
     (
+      Connection,
       initialiseDB,
       saveSummoner,
       saveMatch
