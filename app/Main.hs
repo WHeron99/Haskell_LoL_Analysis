@@ -25,12 +25,23 @@ displayUserChoices conn = do
         \2. Add a players 10 most recent matches to the database \n\
         \3. Query the most popular game mode among stored matches \n\
         \4. (Etc. I'll think of more later...) \n\
-        \0. --- QUIT --- \n\
+        \0. --- QUIT --- \n\n\
+        \Please input your choice (as a number):\n\
         \"
     putStrLn menu_text
-    -- TODO : Handle dispatch of different commands 
-    dispatchGetNewSummoner conn
-    putStrLn "Summoner successfully retrieved..."
+
+    -- Dispatch relevant function -- TODO - Improve to use a dispatch type or something more expandable
+    userChoice <- getLine
+    case userChoice of
+        "0" -> putStrLn "Thanks for using our program. Goodbye!"
+        "1" -> dispatchGetNewSummoner conn 
+        "2" -> dispatchGetPlayerRecentMatches conn
+        _ -> putStrLn "Sorry, I do not recognise that command, please try again."
+    
+    -- Check exit condition
+    case userChoice of
+        "0" -> return ()
+        _ -> displayUserChoices conn
 
 
 dispatchGetNewSummoner :: Connection -> IO ()
