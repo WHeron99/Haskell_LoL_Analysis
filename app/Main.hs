@@ -66,9 +66,21 @@ dispatchGetPlayerRecentMatches conn = do
                 credentials to query their match list - then iterate over them to retrieve and store
                 full match details.
     -}
+
+    {- 
     let url' = "https://euw1.api.riotgames.com/lol/match/v4/matches/4882690236"
     json' <- makeAPIRequest url'
     case (parseMatch json') of
         Left err -> putStrLn err
         Right match -> do
             saveMatch match conn
+    -}
+
+    putStrLn "Please enter the name of the champion you would like to get the matches for: "
+    account_name <- getLine
+
+    result <- queryAccountIdByName conn account_name
+    putStrLn $ show result -- ? Test Line - DEBUG: Shows the result of the query
+
+    -- If the summoner id was retrieved successfully - we can continue execution as expected, if not we
+    --      we must fetch the Summoner from the API before continuing execution.

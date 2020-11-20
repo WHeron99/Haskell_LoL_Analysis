@@ -13,8 +13,11 @@ module Database
     (
       Connection,
       initialiseDB,
+      -- * Functions to save to the database
       saveSummoner,
-      saveMatch
+      saveMatch,
+      -- * Functions to query the database
+      queryAccountIdByName
     ) where
 
 -- Import required modules
@@ -241,3 +244,21 @@ saveMatch match conn = do
         print "Match saved to database successfully."
     else
         print "Match already exists!"
+
+{- |
+    'queryAccountIdByName' is a function which takes a 'Connection' and a 'String' - denoting the name
+        Account/Summoner being queried.
+
+    This function returns the 'String' giving the queried accounts accountId given a successful query on
+        the database. In the case that no results, or more than a single result is returned - meaning our
+        query was ambiguous - we return a Left 'Either' denoting the error.
+-}
+queryAccountIdByName :: Connection -> String -> IO (Either String String)
+queryAccountIdByName conn account_name = do
+    values <- quickQuery' conn ("SELECT accountId FROM summoners WHERE name='" ++ account_name ++ "'") []
+    case (length values) of
+        1 -> do
+            let id = fromSql (head (head values)) :: String
+            return (Right id)
+        _ -> do
+            return (Left "Query returned unexpected number of results (0 or, 2 or more)")
