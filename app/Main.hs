@@ -38,7 +38,7 @@ displayUserChoices conn = do
         "2" -> dispatchGetPlayerRecentMatches conn
         _ -> putStrLn "Sorry, I do not recognise that command, please try again."
     
-    -- Check exit condition
+    -- Check exit condition - Repeat if they didn't choose to exit the program
     case userChoice of
         "0" -> return ()
         _ -> displayUserChoices conn
@@ -57,6 +57,7 @@ dispatchGetNewSummoner conn = do
         Right summoner -> do
             putStrLn "Saving to DB..."
             saveSummoner summoner conn
+
 
 dispatchGetPlayerRecentMatches :: Connection -> IO ()
 dispatchGetPlayerRecentMatches conn = do
@@ -82,5 +83,14 @@ dispatchGetPlayerRecentMatches conn = do
     result <- queryAccountIdByName conn account_name
     putStrLn $ show result -- ? Test Line - DEBUG: Shows the result of the query
 
-    -- If the summoner id was retrieved successfully - we can continue execution as expected, if not we
-    --      we must fetch the Summoner from the API before continuing execution.
+    case result of
+        Left str -> putStrLn str
+        Right account_id -> do
+            -- Account ID Successfully retrieved, call for their match list
+            json <- requestMatchList account_id
+            case (parseMatchList json) of
+                Left err -> do
+                    putStrLn err
+                Right match_list -> do
+                    putStrLn (show match_list)
+                    -- TODO - Continue to request + parse all matches from this match list

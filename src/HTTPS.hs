@@ -10,7 +10,8 @@ a set of predefined functions.
 module HTTPS
     (
       makeAPIRequest,
-      requestSummonerByName
+      requestSummonerByName,
+      requestMatchList
     ) where
 
 -- Import needed packages
@@ -47,6 +48,20 @@ makeAPIRequest url = do
 -}
 requestSummonerByName :: String -> IO L8.ByteString
 requestSummonerByName name = do
-    req <- parseRequest $ "https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/" ++ name ++ "?api_key=" ++ api_key
-    res <- httpLBS req
-    return $ getResponseBody res
+  req <- parseRequest $ "https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/" ++ name ++ "?api_key=" ++ api_key
+  res <- httpLBS req
+  return $ getResponseBody res
+
+{- |
+  'requestMatchList' takes a players account id, and attempts to query the match endpoint on the Riot
+  Games API, to get their recent match list - with a limit of 10 matches.
+
+  This function takes a 'String' parameter, containing the accounts accountId.
+
+  This function returns an 'IO' 'L8.ByteString', which contains the JSON from the HTTP response body.
+-}
+requestMatchList :: String -> IO L8.ByteString
+requestMatchList accountId = do
+  req <- parseRequest $ "https://euw1.api.riotgames.com/lol/match/v4/matchlists/by-account/" ++ accountId ++ "?endIndex=10&api_key=" ++ api_key
+  res <- httpLBS req
+  return $ getResponseBody res
