@@ -136,8 +136,8 @@ prepareSummonerInsert conn = prepare conn "INSERT INTO summoners VALUES (?,?,?,?
     This function also performs a check to ensure it will not attempt to write to a primary key
         (summoner_id) that is already occupied.
 -}
-saveSummoner :: Summoner -> Connection -> IO ()
-saveSummoner summoner conn = do
+saveSummoner :: Connection -> Summoner -> IO ()
+saveSummoner conn summoner = do
     let summoner_id = s_id summoner
     let query = "SELECT * FROM summoners WHERE id='" ++ summoner_id ++ "'"
     check_exists <- quickQuery' conn query []
@@ -227,8 +227,8 @@ matchToSQL match = [
     This method will not perform any meaningful action if the match that is being written to the
     database already exists, by performing a quick query on the primary key - the game_id.
 -}
-saveMatch :: Match -> Connection -> IO ()
-saveMatch match conn = do
+saveMatch :: Connection -> Match -> IO ()
+saveMatch conn match = do
     let game_id = m_gameId match
     check_exists <- quickQuery' conn ("SELECT * FROM match WHERE gameId=" ++ show(game_id)) []
     if check_exists == [] then do
