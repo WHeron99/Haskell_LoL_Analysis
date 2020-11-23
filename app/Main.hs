@@ -4,6 +4,8 @@ import HTTPS
 import Parse
 import Database
 
+import Control.Monad
+
 main :: IO ()
 main = do
     putStrLn "--- Welcome to Will and Brandon's Haskell App! ---"
@@ -44,6 +46,11 @@ displayUserChoices conn = do
         _ -> displayUserChoices conn
 
 
+{- |
+    'dispatchGetNewSummoner' is a function which requests the user to input the name of a Summoner/Account
+    to add to the database. The user is presented a prompt to enter the name of the summoner, and on providing
+    a name, the program will attempt to query the API and write a successful query result to the database.
+-}
 dispatchGetNewSummoner :: Connection -> IO ()
 dispatchGetNewSummoner conn = do
     putStrLn "Please enter a Summoner name to retrieve..."
@@ -56,32 +63,22 @@ dispatchGetNewSummoner conn = do
             putStrLn "!! Summoner does not exist, or API endpoint is down. Please try again, and if the error persists try another Summoner. !!"
         Right summoner -> do
             putStrLn "Saving to DB..."
-            saveSummoner summoner conn
+            saveSummoner conn summoner
 
 
+{-
+    'dispatchGetPlayerRecentMatches' prompts the user to input the name of a Summoner with which to query
+    their 10 latest matches from the API, to add to the database. In this case, the Summoner must already
+    exist in the local database, else the user will get a warning that the query to find the summoner returned
+    no or too many results. 
+-}
 dispatchGetPlayerRecentMatches :: Connection -> IO ()
 dispatchGetPlayerRecentMatches conn = do
-    -- ! EXPERIMENTAL ! -- 
-    {- TODO : Allow user to select a Player with which to get their 10 most recent matches,
-                first check if their details are in the database, if they are, use their stored
-                credentials to query their match list - then iterate over them to retrieve and store
-                full match details.
-    -}
-
-    {- 
-    let url' = "https://euw1.api.riotgames.com/lol/match/v4/matches/4882690236"
-    json' <- makeAPIRequest url'
-    case (parseMatch json') of
-        Left err -> putStrLn err
-        Right match -> do
-            saveMatch match conn
-    -}
-
-    putStrLn "Please enter the name of the champion you would like to get the matches for: "
+    putStrLn "Please enter the name of the Summoner/Account you would like to get the matches for: "
     account_name <- getLine
 
     result <- queryAccountIdByName conn account_name
-    putStrLn $ show result -- ? Test Line - DEBUG: Shows the result of the query
+    -- putStrLn $ show result -- ? Test Line - DEBUG: Shows the result of the query
 
     case result of
         Left str -> putStrLn str
@@ -92,5 +89,12 @@ dispatchGetPlayerRecentMatches conn = do
                 Left err -> do
                     putStrLn err
                 Right match_list -> do
-                    putStrLn (show match_list)
-                    -- TODO - Continue to request + parse all matches from this match list
+                    let match_ids = map (mi_gameId) (ml_matches match_list)
+                    matches <- mapM (requestMatchData) (match_ids)
+                    -- Following line determines if all matches were retrieved succesfully.
+                    let parsed_matches = mapM parseMatch matches
+                    case parsed_matches of 
+                        Left err -> print err
+                        Right matches' -> do
+                            -- Matches successfully parsed, write them all to DB (Use mapM_ to discard the results of the function)
+                            mapM_ (saveMatch conn) matches'
