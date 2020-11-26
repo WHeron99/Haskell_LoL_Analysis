@@ -38,6 +38,7 @@ displayUserChoices conn = do
         "0" -> putStrLn "Thanks for using our program. Goodbye!"
         "1" -> dispatchGetNewSummoner conn 
         "2" -> dispatchGetPlayerRecentMatches conn
+        "3" -> dispatchQueryMostPlayedGameMode conn
         _ -> putStrLn "Sorry, I do not recognise that command, please try again."
     
     -- Check exit condition - Repeat if they didn't choose to exit the program
@@ -98,3 +99,20 @@ dispatchGetPlayerRecentMatches conn = do
                         Right matches' -> do
                             -- Matches successfully parsed, write them all to DB (Use mapM_ to discard the results of the function)
                             mapM_ (saveMatch conn) matches'
+
+
+{-
+    'dispatchQueryMostPlayedGameMode' is called when the user wishes to determine which game mode is most popular
+        in the database when presented the list of potential options. This function simply takes the database 
+        'Connection', and utilises the function from the Database module to get the results based on a predefined
+        query.
+
+    The results are returned as a tuple, and mapped over in order to print them in the order as given by the query,
+        which is in descending order based on the number of matches played of that game mode in the database.
+-}
+dispatchQueryMostPlayedGameMode :: Connection -> IO ()
+dispatchQueryMostPlayedGameMode conn = do
+    res <- queryMostPlayedGameMode conn
+    putStrLn "Most popular game modes: "
+    -- Map over the tuples to print each - mapM_ to discard the implied result of the operation.
+    mapM_ (\(x,y) -> putStrLn $ x ++ ": " ++ show y) res

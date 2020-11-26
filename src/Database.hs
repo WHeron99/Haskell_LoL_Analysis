@@ -17,7 +17,8 @@ module Database
       saveSummoner,
       saveMatch,
       -- * Functions to query the database
-      queryAccountIdByName
+      queryAccountIdByName,
+      queryMostPlayedGameMode
     ) where
 
 -- Import required modules
@@ -246,7 +247,7 @@ saveMatch conn match = do
         print "Match already exists!"
 
 {- |
-    'queryAccountIdByName' is a function which takes a 'Connection' and a 'String' - denoting the name
+    'queryAccountIdByName' is a function which takes a 'Connection' to the database and a 'String' - denoting the name
         Account/Summoner being queried.
 
     This function returns the 'String' giving the queried accounts accountId given a successful query on
@@ -261,4 +262,29 @@ queryAccountIdByName conn account_name = do
             let id = fromSql (head (head values)) :: String
             return (Right id)
         _ -> do
-            return (Left "Query returned unexpected number of results (0 or, 2 or more)")
+            return (Left "Query returned an unexpected number of results")
+
+
+{- |
+    'queryMostPlayedGameMode' is a function that executes a query on the database linked via the given 'Connection' in order
+        to return each game mode present in the collection of matches in the database, ordered by their popularity in the
+        collection.
+
+    The return format of [('String', 'Int')] denotes a list of tuples, where each tuple represents a game mode, given by
+        the 'String', and its popularity, in terms of the number of matches played of that mode in the database, given by
+        the 'Int'.
+-}
+queryMostPlayedGameMode :: Connection -> IO ([(String, Int)])
+queryMostPlayedGameMode conn = 
+    do
+        res <- quickQuery' conn "SELECT m.gameMode, COUNT(*) FROM match m GROUP BY m.gameMode ORDER BY COUNT(*) DESC" []
+        let matchTypes = map convertFromSql res
+        return matchTypes
+    where
+        convertFromSql :: [SqlValue] -> (String, Int)
+        convertFromSql [sql_match_type, sql_count] = (match_type, count)
+            where
+                match_type = case fromSql sql_match_type of
+                    Just x -> x
+                    Nothing -> "NULL"
+                count = (fromSql sql_count) :: Int 
