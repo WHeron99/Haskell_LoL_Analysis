@@ -212,7 +212,7 @@ teamToSQL game_id team = [
 
 {- |
     'matchToSQL' takes a match object, and parses the required values for the match table
-    in the match database table.
+        in the match database table.
 -}
 matchToSQL :: Match -> [SqlValue]
 matchToSQL match = [
@@ -225,11 +225,11 @@ matchToSQL match = [
 
 {- |
     'saveMatch' takes a 'Match' object, and prepares each of the required statements for its
-    components for saving to the database. It will save 10 'Participant' and 'ParticipantIdentity'
-    records, 2 'Team' records and one overall 'Match' to the database. 
+        components for saving to the database. It will save 10 'Participant' and 'ParticipantIdentity'
+        records, 2 'Team' records and one overall 'Match' to the database. 
 
     This method will not perform any meaningful action if the match that is being written to the
-    database already exists, by performing a quick query on the primary key - the game_id.
+        database already exists, by performing a quick query on the primary key - the game_id.
 -}
 saveMatch :: Connection -> Match -> IO ()
 saveMatch conn match = do

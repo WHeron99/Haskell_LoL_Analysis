@@ -15,10 +15,10 @@ main = do
 
 
 {- |
-'displayerUserChoices' displays a list of actions that the user may take with the application, and then
-    provides them the option to select one, and based on their selection, dispatch the required function
-    to perform the action. This function will be called recursively until the user decides to quit, in
-    which case this function simply does not call itself any further.
+    'displayerUserChoices' displays a list of actions that the user may take with the application, and then
+        provides them the option to select one, and based on their selection, dispatch the required function
+        to perform the action. This function will be called recursively until the user decides to quit, in
+        which case this function simply does not call itself any further.
 -}
 displayUserChoices :: Connection -> IO ()
 displayUserChoices conn = do
@@ -51,8 +51,8 @@ displayUserChoices conn = do
 
 {- |
     'dispatchGetNewSummoner' is a function which requests the user to input the name of a Summoner/Account
-    to add to the database. The user is presented a prompt to enter the name of the summoner, and on providing
-    a name, the program will attempt to query the API and write a successful query result to the database.
+        to add to the database. The user is presented a prompt to enter the name of the summoner, and on providing
+        a name, the program will attempt to query the API and write a successful query result to the database.
 -}
 dispatchGetNewSummoner :: Connection -> IO ()
 dispatchGetNewSummoner conn = do
@@ -71,7 +71,7 @@ dispatchGetNewSummoner conn = do
 
 {-
     'dispatchGetPlayerRecentMatches' prompts the user to input the name of a Summoner with which to query
-    their 10 latest matches from the API, to add to the database.
+        their 10 latest matches from the API, to add to the database.
 
     If the Summoner already exists in the database, their account id will be retrieved from the database using
         a simple query, and then passed to 'fetchAndSaveMatches'.

@@ -37,7 +37,7 @@ import Data.Aeson.TH
 import qualified Data.ByteString.Lazy.Char8 as L8
 import GHC.Generics
 
--- Create record type for Summoner information and parser 
+
 {- |
     'Summoner' is a data type for holding a League of Legends player's account information.
 -}
@@ -61,7 +61,6 @@ parseSummoner :: L8.ByteString -> Either String Summoner
 parseSummoner json = eitherDecode json :: Either String Summoner
 
 
--- Create MatchList record types and parser 
 {- | 
     'MatchList' record type, contains information regarding the information retrieved from the matchlist
         endpoint, including 'MatchInfo' for the returned matches
@@ -98,7 +97,6 @@ parseMatchList :: L8.ByteString -> Either String MatchList
 parseMatchList json = eitherDecode json :: Either String MatchList
 
 
--- Create Match record types and parser
 {- |
     'Match' contains greater detail regarding a single match compared to that of 
         'MatchInfo'. 
