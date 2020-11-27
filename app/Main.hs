@@ -27,6 +27,7 @@ displayUserChoices conn = do
         \2. Add a players 10 most recent matches to the database \n\
         \3. Query the most popular game mode among stored matches \n\
         \4. (Etc. I'll think of more later...) \n\
+        \9. Dump Database to JSON files \n\
         \0. --- QUIT --- \n\n\
         \Please input your choice (as a number):\n\
         \"
@@ -39,6 +40,7 @@ displayUserChoices conn = do
         "1" -> dispatchGetNewSummoner conn 
         "2" -> dispatchGetPlayerRecentMatches conn
         "3" -> dispatchQueryMostPlayedGameMode conn
+        "9" -> dumpDatabaseToJSON conn
         _ -> putStrLn "Sorry, I do not recognise that command, please try again."
     
     -- Check exit condition - Repeat if they didn't choose to exit the program
@@ -69,9 +71,14 @@ dispatchGetNewSummoner conn = do
 
 {-
     'dispatchGetPlayerRecentMatches' prompts the user to input the name of a Summoner with which to query
-    their 10 latest matches from the API, to add to the database. In this case, the Summoner must already
-    exist in the local database, else the user will get a warning that the query to find the summoner returned
-    no or too many results. 
+    their 10 latest matches from the API, to add to the database.
+
+    If the Summoner already exists in the database, their account id will be retrieved from the database using
+        a simple query, and then passed to 'fetchAndSaveMatches'.
+
+    In the case the Summoner is not in the database, an attempt will be made to query the API for the given
+        Summoner given the name, and if successful, the function will continue to execute by taking the returned
+        Summoner's account ID for use with 'fetchAndSaveMatches' function
 -}
 dispatchGetPlayerRecentMatches :: Connection -> IO ()
 dispatchGetPlayerRecentMatches conn = do
@@ -82,23 +89,42 @@ dispatchGetPlayerRecentMatches conn = do
     -- putStrLn $ show result -- ? Test Line - DEBUG: Shows the result of the query
 
     case result of
-        Left str -> putStrLn str
+        Left str -> do
+            -- Queried summoner does not currently exist in database - get them and add to database before resuming.
+            putStrLn "Given summoner not current in database... Fetching..."
+            summoner_json <- requestSummonerByName account_name
+            case (parseSummoner summoner_json) of 
+                Left err -> do
+                    putStrLn "!! Summoner does not exist, or API endpoint is down. Please try again, and if the error persists try another Summoner. !!"
+                Right summoner -> do
+                    -- We have the summoner object, save it to database, and use their account id to save their match history
+                    saveSummoner conn summoner
+                    fetchAndSavePlayersMatches conn $ s_accountId summoner
         Right account_id -> do
             -- Account ID Successfully retrieved, call for their match list
-            json <- requestMatchList account_id
-            case (parseMatchList json) of
-                Left err -> do
-                    putStrLn err
-                Right match_list -> do
-                    let match_ids = map (mi_gameId) (ml_matches match_list)
-                    matches <- mapM (requestMatchData) (match_ids)
-                    -- Following line determines if all matches were retrieved succesfully.
-                    let parsed_matches = mapM parseMatch matches
-                    case parsed_matches of 
-                        Left err -> print err
-                        Right matches' -> do
-                            -- Matches successfully parsed, write them all to DB (Use mapM_ to discard the results of the function)
-                            mapM_ (saveMatch conn) matches'
+            fetchAndSavePlayersMatches conn account_id
+
+{- |
+    'fetchAndSavePlayersMatches' acts as a helper method to 'dispatchGetPlayerRecentMatches', by taking the active
+        'Connection' and an account ID, given by a 'String' in order to request their 10 most recent matches, parse
+        them in to the 'Match' type, and then save to the database.
+-}
+fetchAndSavePlayersMatches :: Connection -> String -> IO ()
+fetchAndSavePlayersMatches conn account_id = do
+    json <- requestMatchList account_id
+    case (parseMatchList json) of
+        Left err -> do
+            putStrLn err
+        Right match_list -> do
+            let match_ids = map (mi_gameId) (ml_matches match_list)
+            matches <- mapM (requestMatchData) (match_ids)
+            -- Following line determines if all matches were retrieved succesfully.
+            let parsed_matches = mapM parseMatch matches
+            case parsed_matches of 
+                Left err -> print err
+                Right matches' -> do
+                    -- Matches successfully parsed, write them all to DB (Use mapM_ to discard the results of the function)
+                    mapM_ (saveMatch conn) matches'
 
 
 {-

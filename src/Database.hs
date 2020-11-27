@@ -292,7 +292,12 @@ queryMostPlayedGameMode conn =
                     Nothing -> "NULL"
                 count = (fromSql sql_count) :: Int 
 
-
+{- |
+    'dumpDatabaseToJSON' dumps the entire contents of the Database in to two JSON files (for both Matches and Summoners).
+        The required queries are read from a local file, which utilises the JSON1 extension for SQLite to read the results
+        of some general queries to a JSON string, which is then returned as an SqlValue, and parsed in to a standard 'L8.ByteString'
+        which can be written to a file in the ./OUT/ directory.
+-}
 dumpDatabaseToJSON :: Connection -> IO ()
 dumpDatabaseToJSON conn = 
     do
