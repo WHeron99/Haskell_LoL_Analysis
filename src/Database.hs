@@ -18,13 +18,16 @@ module Database
       saveMatch,
       -- * Functions to query the database
       queryAccountIdByName,
-      queryMostPlayedGameMode
+      queryMostPlayedGameMode,
+      dumpDatabaseToJSON
     ) where
 
 -- Import required modules
 import Database.HDBC
 import Database.HDBC.Sqlite3
 import Parse
+
+import qualified Data.ByteString.Lazy.Char8 as L8
 
 {- |
     'initialiseDB' creates a new 'Connection' to the SQL database at "./league.sqlite", and
@@ -288,3 +291,19 @@ queryMostPlayedGameMode conn =
                     Just x -> x
                     Nothing -> "NULL"
                 count = (fromSql sql_count) :: Int 
+
+
+dumpDatabaseToJSON :: Connection -> IO ()
+dumpDatabaseToJSON conn = 
+    do
+        -- Dump the matches to a JSON file
+        dump_matches <- readFile "sql/dump_matches.sql"
+        res <- quickQuery' conn dump_matches []
+        let json = fromSql (head (head res)) :: L8.ByteString
+        L8.writeFile "OUT/matches_dump.json" json
+
+        -- Dump the summoners to their own JSON file
+        dump_summoners <- readFile "sql/dump_summoners.sql"
+        res' <- quickQuery' conn dump_summoners []
+        let json' = fromSql (head (head res')) :: L8.ByteString
+        L8.writeFile "OUT/summoners_dump.json" json'
