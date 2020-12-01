@@ -39,13 +39,13 @@ makeAPIRequest url = do
 
 {- |
   'requestSummonerByName' takes a players/accounts name, and attempts to query the summoners end point
-  of the Riot Games API to get their Summoner (Account) information.
+    of the Riot Games API to get their Summoner (Account) information.
 
   This function takes a single 'String' parameter, which denotes the name of the account we are looking
-  for.
+    for.
 
   This function returns an 'IO' 'L8.ByteString', which contains the returned JSON data from the HTTP response 
-  body.
+    body.
 -}
 requestSummonerByName :: String -> IO L8.ByteString
 requestSummonerByName name = do
@@ -55,7 +55,7 @@ requestSummonerByName name = do
 
 {- |
   'requestMatchList' takes a players account id, and attempts to query the match endpoint on the Riot
-  Games API, to get their recent match list - with a limit of 10 matches.
+    Games API, to get their recent match list - with a limit of 10 matches.
 
   This function takes a 'String' parameter, containing the accounts accountId.
 
@@ -70,7 +70,7 @@ requestMatchList accountId = do
 
 {- |
   'requestMatchData' takes a match id, and attempts to query the match endpoint for detailed match
-  information. 
+    information. 
 
   This function takes an 'Int' parameter - which is the match ID to request.
 

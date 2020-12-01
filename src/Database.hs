@@ -11,19 +11,27 @@ This module is responsible for creating and maintaining the connection to the da
 
 module Database
     (
-      Connection,
-      initialiseDB,
-      -- * Functions to save to the database
-      saveSummoner,
-      saveMatch,
-      -- * Functions to query the database
-      queryAccountIdByName
+        Connection,
+        initialiseDB,
+        -- * Functions to save to the database
+        saveSummoner,
+        saveMatch,
+        -- * Functions to query the database
+        queryAccountIdByName,
+        queryAllSummoners,
+        queryMostPlayedGameMode,
+        querySummonerWithMostKills,
+        querySummonerByDamage,
+        -- * Dump functionality
+        dumpDatabaseToJSON
     ) where
 
 -- Import required modules
 import Database.HDBC
 import Database.HDBC.Sqlite3
 import Parse
+
+import qualified Data.ByteString.Lazy.Char8 as L8
 
 {- |
     'initialiseDB' creates a new 'Connection' to the SQL database at "./league.sqlite", and
@@ -208,7 +216,7 @@ teamToSQL game_id team = [
 
 {- |
     'matchToSQL' takes a match object, and parses the required values for the match table
-    in the match database table.
+        in the match database table.
 -}
 matchToSQL :: Match -> [SqlValue]
 matchToSQL match = [
@@ -221,11 +229,11 @@ matchToSQL match = [
 
 {- |
     'saveMatch' takes a 'Match' object, and prepares each of the required statements for its
-    components for saving to the database. It will save 10 'Participant' and 'ParticipantIdentity'
-    records, 2 'Team' records and one overall 'Match' to the database. 
+        components for saving to the database. It will save 10 'Participant' and 'ParticipantIdentity'
+        records, 2 'Team' records and one overall 'Match' to the database. 
 
     This method will not perform any meaningful action if the match that is being written to the
-    database already exists, by performing a quick query on the primary key - the game_id.
+        database already exists, by performing a quick query on the primary key - the game_id.
 -}
 saveMatch :: Connection -> Match -> IO ()
 saveMatch conn match = do
@@ -245,8 +253,9 @@ saveMatch conn match = do
     else
         print "Match already exists!"
 
+
 {- |
-    'queryAccountIdByName' is a function which takes a 'Connection' and a 'String' - denoting the name
+    'queryAccountIdByName' is a function which takes a 'Connection' to the database and a 'String' - denoting the name
         Account/Summoner being queried.
 
     This function returns the 'String' giving the queried accounts accountId given a successful query on
@@ -261,4 +270,124 @@ queryAccountIdByName conn account_name = do
             let id = fromSql (head (head values)) :: String
             return (Right id)
         _ -> do
-            return (Left "Query returned unexpected number of results (0 or, 2 or more)")
+            return (Left "Query returned an unexpected number of results")
+
+
+{- |
+    'queryAllSummoners' reads in a query to retrieve a list of the stored 'Summoners' on the database,
+        and returns a list of tuples of type ('String', 'Int') giving each Summoner's name, and their level.
+-}
+queryAllSummoners :: Connection -> IO ([(String, Int)])
+queryAllSummoners conn =
+    do
+        sql_query <- readFile "sql/view_all_summoners.sql"
+        res <- quickQuery' conn sql_query []
+        let pairs = map convertFromSql res
+        return pairs
+    where
+        convertFromSql :: [SqlValue] -> (String, Int)
+        convertFromSql [sql_summoner_name, sql_summoner_level] = (summoner_name, summoner_level)
+            where
+                summoner_name = parseSqlString sql_summoner_name
+                summoner_level = (fromSql sql_summoner_level) :: Int
+
+
+{- |
+    'queryMostPlayedGameMode' is a function that executes a query on the database linked via the given 'Connection' in order
+        to return each game mode present in the collection of matches in the database, ordered by their popularity in the
+        collection.
+
+    The return format of [('String', 'Int')] denotes a list of tuples, where each tuple represents a game mode, given by
+        the 'String', and its popularity, in terms of the number of matches played of that mode in the database, given by
+        the 'Int'.
+-}
+queryMostPlayedGameMode :: Connection -> IO ([(String, Int)])
+queryMostPlayedGameMode conn = 
+    do
+        sql_query <- readFile "sql/most_played_game_mode.sql"
+        res <- quickQuery' conn sql_query []
+        let matchTypes = map convertFromSql res
+        return matchTypes
+    where
+        convertFromSql :: [SqlValue] -> (String, Int)
+        convertFromSql [sql_match_type, sql_count] = (match_type, count)
+            where
+                match_type = parseSqlString sql_match_type
+                count = (fromSql sql_count) :: Int
+
+{- |
+    'querySummonerWithMostKills' is a function which will execute a query on the database at the given 'Connection', and
+        return a list of all participants, ordered based on the number of kills they have in all of the stored matches.
+        The SQL query is read in from a local file, and executed, and the returned SqlValues parsed.
+
+    The returned tuple has the form of ('String', 'Int'), which gives the name of Summoner, and the number of kills they scored.
+-}
+querySummonerWithMostKills :: Connection -> IO ([(String, Int)])
+querySummonerWithMostKills conn =
+    do
+        sql_query <- readFile "sql/summoner_with_most_kills.sql"
+        res <- quickQuery' conn sql_query []
+        let pairs = map convertFromSql res
+        return pairs
+    where
+        convertFromSql :: [SqlValue] -> (String, Int)
+        convertFromSql [sql_summoner_name, sql_kill_count] = (summoner_name, kill_count)
+            where  
+                summoner_name = parseSqlString sql_summoner_name
+                kill_count = (fromSql sql_kill_count) :: Int
+
+
+{- |
+    'querySummonerByDamage' queries the database by reading in a SQL query from a local SQL file, and executing it on the given
+        'Connection'. From the list of returned 'SqlValue's, the function parses them back in to a Haskell tuple of 
+        ('String', 'Int', 'Int'), denoting the name of the Summoner, their average dealt damage, and their average taken damage
+        during all of their matches.
+-}
+querySummonerByDamage :: Connection -> IO ([(String, Int, Int)])
+querySummonerByDamage conn = 
+    do
+        sql_query <- readFile "sql/summoner_by_damage.sql"
+        res <- quickQuery' conn sql_query []
+        let tuples = map convertFromSql res
+        return tuples
+    where
+        convertFromSql :: [SqlValue] -> (String, Int, Int)
+        convertFromSql [sql_name, sql_dealt, sql_taken] = (name, dealt, taken)
+            where  
+                name = parseSqlString sql_name
+                dealt = (fromSql sql_dealt) :: Int
+                taken = (fromSql sql_taken) :: Int
+
+
+{- |
+    'dumpDatabaseToJSON' dumps the entire contents of the Database in to two JSON files (for both Matches and Summoners).
+        The required queries are read from a local file, which utilises the JSON1 extension for SQLite to read the results
+        of some general queries to a JSON string, which is then returned as an SqlValue, and parsed in to a standard 'L8.ByteString'
+        which can be written to a file in the ./OUT/ directory.
+-}
+dumpDatabaseToJSON :: Connection -> IO ()
+dumpDatabaseToJSON conn = 
+    do
+        -- Dump the matches to a JSON file
+        dump_matches <- readFile "sql/dump_matches.sql"
+        res <- quickQuery' conn dump_matches []
+        let json = fromSql (head (head res)) :: L8.ByteString
+        L8.writeFile "OUT/matches_dump.json" json
+
+        -- Dump the summoners to their own JSON file
+        dump_summoners <- readFile "sql/dump_summoners.sql"
+        res' <- quickQuery' conn dump_summoners []
+        let json' = fromSql (head (head res')) :: L8.ByteString
+        L8.writeFile "OUT/summoners_dump.json" json'
+
+
+{- |
+    'parseSqlString' is a helper function, which takes an 'SqlValue' type, and attempts to
+        parse it in to a String. Should the parse fail, it returns the 'String' "NULL", else
+        it simply returns the value of the 'SqlValue' String itself.
+-}
+parseSqlString :: SqlValue -> String
+parseSqlString sql_str = 
+    case fromSql sql_str of
+        Just x -> x
+        Nothing -> "NULL"
