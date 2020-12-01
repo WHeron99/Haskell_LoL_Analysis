@@ -25,8 +25,9 @@ displayUserChoices conn = do
     let menu_text = "\nWhat would you like to do? \n\
         \1. Add a new account to the database \n\
         \2. Add a players 10 most recent matches to the database \n\
-        \3. Query the most popular game mode among stored matches \n\
-        \4. Get list of all Summoners, sorted by kill count \n\
+        \3. Print all Summoners/Accounts in the database \n\
+        \4. Query the most popular game mode among stored matches \n\
+        \5. Get list of all Summoners, sorted by kill count \n\
         \9. Dump Database to JSON files \n\
         \0. --- QUIT --- \n\n\
         \Please input your choice (as a number):\n\
@@ -39,8 +40,9 @@ displayUserChoices conn = do
         "0" -> putStrLn "Thanks for using our program. Goodbye!"
         "1" -> dispatchGetNewSummoner conn 
         "2" -> dispatchGetPlayerRecentMatches conn
-        "3" -> dispatchQueryMostPlayedGameMode conn
-        "4" -> dispatchSummonerWithMostKills conn
+        "3" -> dispatchGetAllSummoners conn
+        "4" -> dispatchQueryMostPlayedGameMode conn
+        "5" -> dispatchSummonerWithMostKills conn
         "9" -> dumpDatabaseToJSON conn
         _ -> putStrLn "Sorry, I do not recognise that command, please try again."
     
@@ -105,6 +107,7 @@ dispatchGetPlayerRecentMatches conn = do
             -- Account ID Successfully retrieved, call for their match list
             fetchAndSavePlayersMatches conn account_id
 
+
 {- |
     'fetchAndSavePlayersMatches' acts as a helper method to 'dispatchGetPlayerRecentMatches', by taking the active
         'Connection' and an account ID, given by a 'String' in order to request their 10 most recent matches, parse
@@ -128,6 +131,19 @@ fetchAndSavePlayersMatches conn account_id = do
                     mapM_ (saveMatch conn) matches'
 
 
+{- |
+    'dispatchGetAllSummoners' is called when the user wishes to display a list of each of the Summoners they have
+        entered in to the database. A call is made to the respective database function, which passes the results
+        back to the function, such that we can print each to standard input - utilising mapM_ as we are only
+        interested in the side-effect of printing.
+-}
+dispatchGetAllSummoners :: Connection -> IO ()
+dispatchGetAllSummoners conn = do
+    res <- queryAllSummoners conn
+    putStrLn "Summoners currently stored in the database: "
+    mapM_ (\(x,y) -> putStrLn $ x ++ ", Summoner Level: " ++ show y) res
+
+
 {-
     'dispatchQueryMostPlayedGameMode' is called when the user wishes to determine which game mode is most popular
         in the database when presented the list of potential options. This function simply takes the database 
@@ -145,7 +161,10 @@ dispatchQueryMostPlayedGameMode conn = do
     mapM_ (\(x,y) -> putStrLn $ x ++ ": " ++ show y) res
 
 {- |
-    
+    'dispatchSummonerWithMostKills' is called when the user wishes to display a list of participants from all matches, 
+        ordered by the number of kills they got in all of their games. This function simply takes the database
+        'Connection' with which to query on, and makes a call to the Database module to get the results in a given
+        format, which are then read back via standard output for each tuple.
 -}
 dispatchSummonerWithMostKills :: Connection -> IO ()
 dispatchSummonerWithMostKills conn = do

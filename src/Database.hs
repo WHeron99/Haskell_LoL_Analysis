@@ -11,17 +11,18 @@ This module is responsible for creating and maintaining the connection to the da
 
 module Database
     (
-      Connection,
-      initialiseDB,
-      -- * Functions to save to the database
-      saveSummoner,
-      saveMatch,
-      -- * Functions to query the database
-      queryAccountIdByName,
-      queryMostPlayedGameMode,
-      querySummonerWithMostKills,
-      -- * Dump functionality
-      dumpDatabaseToJSON
+        Connection,
+        initialiseDB,
+        -- * Functions to save to the database
+        saveSummoner,
+        saveMatch,
+        -- * Functions to query the database
+        queryAccountIdByName,
+        queryAllSummoners,
+        queryMostPlayedGameMode,
+        querySummonerWithMostKills,
+        -- * Dump functionality
+        dumpDatabaseToJSON
     ) where
 
 -- Import required modules
@@ -251,6 +252,7 @@ saveMatch conn match = do
     else
         print "Match already exists!"
 
+
 {- |
     'queryAccountIdByName' is a function which takes a 'Connection' to the database and a 'String' - denoting the name
         Account/Summoner being queried.
@@ -271,6 +273,25 @@ queryAccountIdByName conn account_name = do
 
 
 {- |
+    'queryAllSummoners' reads in a query to retrieve a list of the stored 'Summoners' on the database,
+        and returns a list of tuples of type ('String', 'Int') giving each Summoner's name, and their level.
+-}
+queryAllSummoners :: Connection -> IO ([(String, Int)])
+queryAllSummoners conn =
+    do
+        sql_query <- readFile "sql/view_all_summoners.sql"
+        res <- quickQuery' conn sql_query []
+        let pairs = map convertFromSql res
+        return pairs
+    where
+        convertFromSql :: [SqlValue] -> (String, Int)
+        convertFromSql [sql_summoner_name, sql_summoner_level] = (summoner_name, summoner_level)
+            where
+                summoner_name = parseSqlString sql_summoner_name
+                summoner_level = (fromSql sql_summoner_level) :: Int
+
+
+{- |
     'queryMostPlayedGameMode' is a function that executes a query on the database linked via the given 'Connection' in order
         to return each game mode present in the collection of matches in the database, ordered by their popularity in the
         collection.
@@ -282,16 +303,15 @@ queryAccountIdByName conn account_name = do
 queryMostPlayedGameMode :: Connection -> IO ([(String, Int)])
 queryMostPlayedGameMode conn = 
     do
-        res <- quickQuery' conn "SELECT m.gameMode, COUNT(*) FROM match m GROUP BY m.gameMode ORDER BY COUNT(*) DESC" []
+        sql_query <- readFile "sql/most_played_game_mode.sql"
+        res <- quickQuery' conn sql_query []
         let matchTypes = map convertFromSql res
         return matchTypes
     where
         convertFromSql :: [SqlValue] -> (String, Int)
         convertFromSql [sql_match_type, sql_count] = (match_type, count)
             where
-                match_type = case fromSql sql_match_type of
-                    Just x -> x
-                    Nothing -> "NULL"
+                match_type = parseSqlString sql_match_type
                 count = (fromSql sql_count) :: Int
 
 {- |
