@@ -21,6 +21,7 @@ module Database
         queryAllSummoners,
         queryMostPlayedGameMode,
         querySummonerWithMostKills,
+        querySummonerByDamage,
         -- * Dump functionality
         dumpDatabaseToJSON
     ) where
@@ -316,7 +317,7 @@ queryMostPlayedGameMode conn =
 
 {- |
     'querySummonerWithMostKills' is a function which will execute a query on the database at the given 'Connection', and
-        return a list of tuples for the top 5 players, based on the number of kills they have in all of the stored matches.
+        return a list of all participants, ordered based on the number of kills they have in all of the stored matches.
         The SQL query is read in from a local file, and executed, and the returned SqlValues parsed.
 
     The returned tuple has the form of ('String', 'Int'), which gives the name of Summoner, and the number of kills they scored.
@@ -334,6 +335,28 @@ querySummonerWithMostKills conn =
             where  
                 summoner_name = parseSqlString sql_summoner_name
                 kill_count = (fromSql sql_kill_count) :: Int
+
+
+{- |
+    'querySummonerByDamage' queries the database by reading in a SQL query from a local SQL file, and executing it on the given
+        'Connection'. From the list of returned 'SqlValue's, the function parses them back in to a Haskell tuple of 
+        ('String', 'Int', 'Int'), denoting the name of the Summoner, their average dealt damage, and their average taken damage
+        during all of their matches.
+-}
+querySummonerByDamage :: Connection -> IO ([(String, Int, Int)])
+querySummonerByDamage conn = 
+    do
+        sql_query <- readFile "sql/summoner_by_damage.sql"
+        res <- quickQuery' conn sql_query []
+        let tuples = map convertFromSql res
+        return tuples
+    where
+        convertFromSql :: [SqlValue] -> (String, Int, Int)
+        convertFromSql [sql_name, sql_dealt, sql_taken] = (name, dealt, taken)
+            where  
+                name = parseSqlString sql_name
+                dealt = (fromSql sql_dealt) :: Int
+                taken = (fromSql sql_taken) :: Int
 
 
 {- |

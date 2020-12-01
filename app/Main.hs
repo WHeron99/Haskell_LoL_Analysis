@@ -28,6 +28,7 @@ displayUserChoices conn = do
         \3. Print all Summoners/Accounts in the database \n\
         \4. Query the most popular game mode among stored matches \n\
         \5. Get list of all Summoners, sorted by kill count \n\
+        \6. Display participants in order of damage dealt and taken \n\
         \9. Dump Database to JSON files \n\
         \0. --- QUIT --- \n\n\
         \Please input your choice (as a number):\n\
@@ -43,6 +44,7 @@ displayUserChoices conn = do
         "3" -> dispatchGetAllSummoners conn
         "4" -> dispatchQueryMostPlayedGameMode conn
         "5" -> dispatchSummonerWithMostKills conn
+        "6" -> dispatchSummonerByDamage conn
         "9" -> dumpDatabaseToJSON conn
         _ -> putStrLn "Sorry, I do not recognise that command, please try again."
     
@@ -171,3 +173,15 @@ dispatchSummonerWithMostKills conn = do
     res <- querySummonerWithMostKills conn
     putStrLn "Summoners with most kills in stored games: "
     mapM_ (\(x, y) -> putStrLn $ x ++ ": " ++ show y) res 
+
+
+{- |
+    'dispatchSummonerByDamage' is called when the user wishes to display each participant, ordered by the average damage
+        they have dealt and taken. This function simply passes the 'Connection' to the respective Database function, 
+        and then iterates through the returned tuples to display the results of the query.
+-}
+dispatchSummonerByDamage :: Connection -> IO ()
+dispatchSummonerByDamage conn = do
+    res <- querySummonerByDamage conn
+    putStrLn "Summoner Name | Average Damage Dealt | Average Damage Taken"
+    mapM_ (\(x, y, z) -> putStrLn $ x ++ ": " ++ show y ++ " | " ++ show z) res
