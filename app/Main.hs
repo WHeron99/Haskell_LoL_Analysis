@@ -26,7 +26,7 @@ displayUserChoices conn = do
         \1. Add a new account to the database \n\
         \2. Add a players 10 most recent matches to the database \n\
         \3. Query the most popular game mode among stored matches \n\
-        \4. (Etc. I'll think of more later...) \n\
+        \4. Get list of all Summoners, sorted by kill count \n\
         \9. Dump Database to JSON files \n\
         \0. --- QUIT --- \n\n\
         \Please input your choice (as a number):\n\
@@ -40,6 +40,7 @@ displayUserChoices conn = do
         "1" -> dispatchGetNewSummoner conn 
         "2" -> dispatchGetPlayerRecentMatches conn
         "3" -> dispatchQueryMostPlayedGameMode conn
+        "4" -> dispatchSummonerWithMostKills conn
         "9" -> dumpDatabaseToJSON conn
         _ -> putStrLn "Sorry, I do not recognise that command, please try again."
     
@@ -142,3 +143,12 @@ dispatchQueryMostPlayedGameMode conn = do
     putStrLn "Most popular game modes: "
     -- Map over the tuples to print each - mapM_ to discard the implied result of the operation.
     mapM_ (\(x,y) -> putStrLn $ x ++ ": " ++ show y) res
+
+{- |
+    
+-}
+dispatchSummonerWithMostKills :: Connection -> IO ()
+dispatchSummonerWithMostKills conn = do
+    res <- querySummonerWithMostKills conn
+    putStrLn "Summoners with most kills in stored games: "
+    mapM_ (\(x, y) -> putStrLn $ x ++ ": " ++ show y) res 

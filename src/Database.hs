@@ -19,6 +19,8 @@ module Database
       -- * Functions to query the database
       queryAccountIdByName,
       queryMostPlayedGameMode,
+      querySummonerWithMostKills,
+      -- * Dump functionality
       dumpDatabaseToJSON
     ) where
 
@@ -290,7 +292,29 @@ queryMostPlayedGameMode conn =
                 match_type = case fromSql sql_match_type of
                     Just x -> x
                     Nothing -> "NULL"
-                count = (fromSql sql_count) :: Int 
+                count = (fromSql sql_count) :: Int
+
+{- |
+    'querySummonerWithMostKills' is a function which will execute a query on the database at the given 'Connection', and
+        return a list of tuples for the top 5 players, based on the number of kills they have in all of the stored matches.
+        The SQL query is read in from a local file, and executed, and the returned SqlValues parsed.
+
+    The returned tuple has the form of ('String', 'Int'), which gives the name of Summoner, and the number of kills they scored.
+-}
+querySummonerWithMostKills :: Connection -> IO ([(String, Int)])
+querySummonerWithMostKills conn =
+    do
+        sql_query <- readFile "sql/summoner_with_most_kills.sql"
+        res <- quickQuery' conn sql_query []
+        let pairs = map convertFromSql res
+        return pairs
+    where
+        convertFromSql :: [SqlValue] -> (String, Int)
+        convertFromSql [sql_summoner_name, sql_kill_count] = (summoner_name, kill_count)
+            where  
+                summoner_name = parseSqlString sql_summoner_name
+                kill_count = (fromSql sql_kill_count) :: Int
+
 
 {- |
     'dumpDatabaseToJSON' dumps the entire contents of the Database in to two JSON files (for both Matches and Summoners).
@@ -312,3 +336,15 @@ dumpDatabaseToJSON conn =
         res' <- quickQuery' conn dump_summoners []
         let json' = fromSql (head (head res')) :: L8.ByteString
         L8.writeFile "OUT/summoners_dump.json" json'
+
+
+{- |
+    'parseSqlString' is a helper function, which takes an 'SqlValue' type, and attempts to
+        parse it in to a String. Should the parse fail, it returns the 'String' "NULL", else
+        it simply returns the value of the 'SqlValue' String itself.
+-}
+parseSqlString :: SqlValue -> String
+parseSqlString sql_str = 
+    case fromSql sql_str of
+        Just x -> x
+        Nothing -> "NULL"
