@@ -99,7 +99,8 @@ parseMatchList json = eitherDecode json :: Either String MatchList
 
 {- |
     'Match' contains greater detail regarding a single match compared to that of 
-        'MatchInfo'. 
+        'MatchInfo'. Contains information regarding each 'Team' from the match, and
+        each of the 'Participant's.
 -}
 data Match = Match {
     m_gameId :: Int,                                    -- ^ The games unique ID
@@ -113,7 +114,7 @@ data Match = Match {
 } deriving (Show, Generic)
 
 {- |
-    'Team' contains information regarding each team from a given match
+    'Team' contains information regarding for a single team from a match
 -}
 data Team = Team {
     t_teamId :: Int,                -- ^ The teams unique ID (100 or 200, for Blue or Red respectively)
@@ -149,7 +150,7 @@ data Participant = Participant {
 } deriving (Show, Generic)
 
 {- |
-    'ParticipantIdentity' contains information regarding to a individual players account information for a given 'Match'
+    'ParticipantIdentity' contains information regarding to a individual players account information, tied to a given 'Match'
 -}
 data ParticipantIdentity = ParticipantIdentity {
     pi_participantId :: Int,                -- ^ The unique identifier for this player in this 'Match'
@@ -159,10 +160,17 @@ data ParticipantIdentity = ParticipantIdentity {
     pi_currentAccountId :: String           -- ^ The accountId for this given player at this current time
 } deriving (Show, Generic)
 
+
+{-
+    We produce custom parsers for Participant and ParticipantIdentity, due to their original formatting
+        from the API - each contain nested dictionaries which serve no purpose for our program. Our parsers
+        extract the attributes from these sub-dictionaries allowing us to place them in to a single Haskell
+        datatype.
+-}
 instance FromJSON ParticipantIdentity where
     parseJSON = withObject "participant" $ \o -> do
         pi_participantId <- o .: "participantId"
-        player <- o .: "player"                         -- Get player sub-dictionary from JSON
+        player <- o .: "player"                             -- Get player sub-dictionary from JSON
         pi_accountId <- player .: "accountId"
         pi_summonerName <- player .: "summonerName"
         pi_summonerId <- player .: "summonerId"

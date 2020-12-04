@@ -1,3 +1,14 @@
+{-|
+Module      : Main
+Authors     : William Heron & Brandon Taylor
+Stability   : experimental
+Portability : POSIX
+
+Main is responsible for communicating between each of our modules, and allowing the user to
+    interact with the program using a list of potential operations. Each operation is dispatched
+    from this module, which further calls to the respective module functions.
+-}
+
 module Main where
 
 import HTTPS
@@ -6,6 +17,7 @@ import Database
 
 import Control.Monad
 
+-- Create database connection and grant user interaction ability
 main :: IO ()
 main = do
     putStrLn "--- Welcome to Will and Brandon's Haskell App! ---"

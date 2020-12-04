@@ -4,7 +4,7 @@ Stability   : experimental
 Portability : POSIX
 
 This module is responsible for attempting to make API calls to a given API endpoint, using
-a set of predefined functions.
+a set of predefined functions for each particular interaction (i.e. retrieving a Match, or Summoner)
 -}
 
 module HTTPS
