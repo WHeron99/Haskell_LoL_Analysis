@@ -1,6 +1,8 @@
 # ECS713U - Group Project
 Group 7 - William Heron and Brandon Taylor
 
+This project is a simple Riot Games API project written in Haskell, which aims to retrieve data from the API endpoints, store it locally in an SQLite database, and execute queries on all of the information currently stored. Operations include retrieving new Summoners, their Matches, and querying the total number of kills, deaths or assists across their games. There is also the ability to dump the database as JSON, which utilises the JSON1 SQLite extension.
+
 ## Building and Running Application
 In order to build and run this project, you will require a Stack installation.
 
